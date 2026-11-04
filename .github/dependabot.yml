@@ -1,0 +1,31 @@
+# Dependabot opens pull requests when something newer is available. Each PR
+# runs the test suite (the "test" job); merging it publishes a new image.
+version: 2
+updates:
+  # Python packages pinned in requirements.txt (pywebpush, py-vapid, http_ece, tzdata).
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      python-packages:
+        patterns: ["*"]
+        update-types: [minor, patch]   # one PR for small bumps; majors get their own
+
+  # The base image in the Dockerfile (python:3.13-alpine).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+
+  # Action versions used by the workflow (actions/checkout, docker/build-push-action, ...).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      github-actions:
+        patterns: ["*"]
