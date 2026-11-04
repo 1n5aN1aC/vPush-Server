@@ -1,0 +1,30 @@
+# vCounter: a daily reminder at each person's chosen time, skipped once the app
+# has marked the day "done" (all Daily entries checked).
+#
+# Copy to config/apps/vcounter.toml on the server. The file name is the app id.
+# On first start the server appends a [generated] section with this app's admin
+# token and VAPID keys; keep the file private and back it up.
+
+name = "vCounter"
+
+# Pages allowed to call this app's endpoints (scheme + host [+ port], no path).
+origins = ["https://counter.example.com"]
+
+# max_subscribers = 1000
+
+[[rules]]
+id = "daily"
+type = "daily"
+default_time = "20:00"     # used until the subscriber picks a time (prefs.time)
+skip_if_mark = "done"      # vCounter posts this mark when every Daily entry is done
+once_per = "day"           # at most one send per subscriber per local day
+ttl = 21600                # push service keeps it 6h if the phone is offline
+# The service worker builds the visible text from local data; title/body are
+# the fallback if it can't.
+payload = { kind = "daily-reminder", title = "vCounter", body = "Don't forget your dailies" }
+
+# A custom rule: should_send(sub) in vcounter.py next to this file.
+# [[rules]]
+# id = "custom"
+# type = "script"
+# once_per = "day"

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vPush demo</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 24px 16px; background: #111; color: #eee; font: 16px/1.4 system-ui, sans-serif; }
+    main { max-width: 520px; margin: 0 auto; }
+    label, input, button { display: block; width: 100%; box-sizing: border-box; margin: 8px 0; font: inherit; }
+    input { padding: 10px; background: #222; color: #eee; border: 1px solid #444; border-radius: 8px; }
+    button { padding: 12px; background: #ff9f0a; color: #000; border: 0; border-radius: 10px; font-weight: 600; }
+    button.secondary { background: #333; color: #eee; }
+    pre { background: #000; padding: 12px; border-radius: 8px; white-space: pre-wrap; font-size: 13px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>vPush demo</h1>
+  <label>Server <input id="server" value="http://localhost:8787/vpush"></label>
+  <label>App id <input id="app" value="demo"></label>
+  <label>Reminder time <input id="time" type="time" value="20:00"></label>
+  <button id="enable">Enable notifications</button>
+  <button id="mark" class="secondary">Mark "done" for today</button>
+  <button id="disable" class="secondary">Disable</button>
+  <pre id="log"></pre>
+</main>
+<script src="../vpush-client.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const log = (...a) => { $("log").textContent = a.map((x) => typeof x === "string" ? x : JSON.stringify(x, null, 2)).join(" ") + "\n" + $("log").textContent; };
+  const client = () => VPush({ server: $("server").value, app: $("app").value });
+  const today = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+
+  navigator.serviceWorker?.register("sw.js").then(() => log("service worker registered"), (e) => log("sw error:", String(e)));
+
+  $("enable").onclick = async () => {
+    try { await client().enable({ time: $("time").value }); log("enabled", client().state()); }
+    catch (e) { log("enable failed:", String(e)); }
+  };
+  $("mark").onclick = async () => { await client().mark("done", today()); log("marked done for", today()); };
+  $("disable").onclick = async () => { await client().disable(); log("disabled", client().state()); };
+  log("state", client().state());
+  client().sync();
+</script>
+</body>
+</html>

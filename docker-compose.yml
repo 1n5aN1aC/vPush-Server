@@ -1,0 +1,25 @@
+# Copy this file to your server, next to a config/ and data/ folder:
+#
+#   vpush/
+#     docker-compose.yml
+#     update.sh
+#     config/apps/<app>.toml   (+ optional <app>.py)
+#     data/                    (created automatically)
+#
+# Then: docker compose up -d     Update later with: ./update.sh
+
+services:
+  vpush:
+    image: ghcr.io/1n5an1ac/vpush-server:latest
+    container_name: vpush
+    restart: unless-stopped
+    ports:
+      # Only reachable from this machine; your reverse proxy forwards /vpush/ here.
+      - "127.0.0.1:8080:8080"
+    environment:
+      VPUSH_BASE_PATH: /vpush               # the single path your proxy forwards
+      VPUSH_CONTACT: mailto:you@example.com  # push services may contact this address
+      VPUSH_LOG: INFO
+    volumes:
+      - ./config:/config   # app files; the server writes generated secrets into them
+      - ./data:/data       # SQLite database
