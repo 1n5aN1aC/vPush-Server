@@ -1,4 +1,4 @@
-"""Loading apps from /config/apps/<id>.toml.
+"""Loading apps from <config>/apps/<id>.toml (/data/apps/ in the Docker image).
 
 One file per app. On first load, any app whose file has no [generated] section
 gets one appended (admin token + VAPID key pair). Nothing else in the file is

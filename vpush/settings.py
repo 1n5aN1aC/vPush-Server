@@ -11,7 +11,8 @@ def _clean_base(path: str) -> str:
 
 @dataclass
 class Settings:
-    config_dir: str = field(default_factory=lambda: os.environ.get("VPUSH_CONFIG", "/config"))
+    # One folder by default: app files in <config>/apps/, the database in <data>/vpush.db.
+    config_dir: str = field(default_factory=lambda: os.environ.get("VPUSH_CONFIG", "/data"))
     data_dir: str = field(default_factory=lambda: os.environ.get("VPUSH_DATA", "/data"))
     base_path: str = field(default_factory=lambda: _clean_base(os.environ.get("VPUSH_BASE_PATH", "/vpush")))
     host: str = field(default_factory=lambda: os.environ.get("VPUSH_HOST", "0.0.0.0"))

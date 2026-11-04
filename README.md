@@ -31,8 +31,9 @@ On your server:
 vpush/
   docker-compose.yml      ← from this repo; set VPUSH_CONTACT
   update.sh               ← from this repo
-  config/apps/vcounter.toml
-  data/                   ← created automatically
+  data/                   ← the one volume
+    apps/vcounter.toml    ← your app files (+ rule scripts)
+    vpush.db              ← created automatically
 ```
 
 ```bash
@@ -40,7 +41,7 @@ docker compose up -d        # first start: generates each app's keys into its .t
 ./update.sh                 # later: pull the newest image and restart
 ```
 
-Back up `config/` (it holds every app's keys) and `data/` (subscribers). **Never change an app's VAPID keys:** every existing subscription is tied to them.
+Back up `data/`: `data/apps/` holds every app's keys, and `vpush.db` the subscribers. **Never change an app's VAPID keys:** every existing subscription is tied to them.
 
 ### Reverse proxy: one path
 
@@ -73,7 +74,7 @@ Check it: `https://example.com/vpush/healthz` → `{"ok": true, ...}`.
 | `VPUSH_BASE_PATH` | `/vpush` | The single path the server lives under |
 | `VPUSH_CONTACT` | `mailto:admin@example.com` | VAPID contact (`mailto:` or `https:`); push services may reject placeholders |
 | `VPUSH_PORT` | `8080` | |
-| `VPUSH_CONFIG` / `VPUSH_DATA` | `/config` / `/data` | |
+| `VPUSH_CONFIG` / `VPUSH_DATA` | `/data` / `/data` | Where `apps/` and `vpush.db` live; set them apart to split config from the database |
 | `VPUSH_PUSH_HOSTS` | | Extra push-service hosts to accept, comma separated |
 | `VPUSH_LOG` | `INFO` | |
 
@@ -81,7 +82,7 @@ Check it: `https://example.com/vpush/healthz` → `{"ok": true, ...}`.
 
 ## Apps
 
-One file per app: `config/apps/<app-id>.toml`. The file name is the app id (lowercase letters, digits, `-`, `_`). Adding, editing or removing a file is picked up within a minute, with no restart. See [`examples/apps/vcounter.toml`](examples/apps/vcounter.toml).
+One file per app: `data/apps/<app-id>.toml`. The file name is the app id (lowercase letters, digits, `-`, `_`). Adding, editing or removing a file is picked up within a minute, with no restart. See [`examples/apps/vcounter.toml`](examples/apps/vcounter.toml).
 
 ```toml
 name = "vCounter"
@@ -114,7 +115,7 @@ Common options for any rule:
 
 **`type = "daily"`** sends `payload` once a day at the subscriber's `prefs.time` (`"HH:MM"`), or `default_time`. It's skipped if the subscriber has today's `skip_if_mark`. It isn't sent on the day someone subscribes after that day's time has passed. `pref = "..."` changes which prefs key holds the time.
 
-**`type = "script"`** calls `should_send(sub)` in `config/apps/<app-id>.py`, or `file = "..."` / `function = "..."`. It returns a payload dict or `None`. Edits are picked up on the next tick, and exceptions are logged and skipped. See [`examples/apps/example-rule.py`](examples/apps/example-rule.py).
+**`type = "script"`** calls `should_send(sub)` in `data/apps/<app-id>.py`, or `file = "..."` / `function = "..."`. It returns a payload dict or `None`. Edits are picked up on the next tick, and exceptions are logged and skipped. See [`examples/apps/example-rule.py`](examples/apps/example-rule.py).
 
 ```python
 def should_send(sub):

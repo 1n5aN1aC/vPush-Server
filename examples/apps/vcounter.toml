@@ -1,7 +1,7 @@
 # vCounter: a daily reminder at each person's chosen time, skipped once the app
 # has marked the day "done" (all Daily entries checked).
 #
-# Copy to config/apps/vcounter.toml on the server. The file name is the app id.
+# Copy to data/apps/vcounter.toml on the server. The file name is the app id.
 # On first start the server appends a [generated] section with this app's admin
 # token and VAPID keys; keep the file private and back it up.
 

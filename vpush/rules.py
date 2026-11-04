@@ -5,7 +5,7 @@ scheduler only calls it when the rule hasn't already sent to that subscriber
 in the current once_per period, so rules never have to worry about repeats.
 
 Built-in:  type = "daily"   (see daily_rule below; it's also the example)
-Custom:    type = "script"  -> should_send(sub) in /config/apps/<app>.py
+Custom:    type = "script"  -> should_send(sub) in <config>/apps/<app>.py
 """
 
 import importlib.util
@@ -79,7 +79,7 @@ def daily_rule(options: dict):
 
 
 class ScriptRule:
-    """should_send(sub) from /config/apps/<app>.py, reloaded when the file changes."""
+    """should_send(sub) from <config>/apps/<app>.py, reloaded when the file changes."""
 
     def __init__(self, path: str, func: str = "should_send"):
         self.path = path

@@ -1,10 +1,11 @@
-# Copy this file to your server, next to a config/ and data/ folder:
+# Copy this file to your server:
 #
 #   vpush/
 #     docker-compose.yml
 #     update.sh
-#     config/apps/<app>.toml   (+ optional <app>.py)
-#     data/                    (created automatically)
+#     data/
+#       apps/<app>.toml        your app files (+ optional <app>.py rule scripts)
+#       vpush.db               created automatically
 #
 # Then: docker compose up -d     Update later with: ./update.sh
 
@@ -21,5 +22,5 @@ services:
       VPUSH_CONTACT: mailto:you@example.com  # push services may contact this address
       VPUSH_LOG: INFO
     volumes:
-      - ./config:/config   # app files; the server writes generated secrets into them
-      - ./data:/data       # SQLite database
+      # App files (the server writes generated secrets into them) and the database.
+      - ./data:/data

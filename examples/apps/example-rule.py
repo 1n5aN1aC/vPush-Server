@@ -1,4 +1,4 @@
-"""Example script rule. Save as config/apps/<app>.py and add to <app>.toml:
+"""Example script rule. Save as data/apps/<app>.py and add to <app>.toml:
 
     [[rules]]
     id = "weekly"
