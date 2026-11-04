@@ -12,16 +12,59 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Test on the same Python as the image, read from the Dockerfile, so a
+      # Dependabot base-image bump is tested on the version it actually ships.
+      - id: py
+        run: echo "version=$(sed -n 's/^FROM python:\([0-9.]*\)-.*/\1/p' Dockerfile)" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.13"   # same as the Docker image
+          python-version: ${{ steps.py.outputs.version }}
+          allow-prereleases: true
           cache: pip
+      - run: python --version
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
 
-  publish:
-    # Only after tests pass, and never for pull requests.
+  smoke:
+    # Build the real image, run it, and check it behaves and is locked down.
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: vpush:smoke
+          cache-from: type=gha
+      - name: Run the image and check it
+        run: |
+          set -eu
+          mkdir -p data/apps
+          cp examples/apps/vcounter.toml data/apps/
+          sudo chown -R 909:909 data
+          docker run -d --name vpush -p 8080:8080 -v "$PWD/data:/data" vpush:smoke
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:8080/vpush/healthz && break; sleep 1; done
+          echo
+          curl -fsS http://127.0.0.1:8080/vpush/healthz
+          echo
+          docker logs vpush 2>&1 | tee log.txt
+          test "$(docker exec vpush id -u)" = 909
+          test "$(docker exec vpush id -g)" = 909
+          test -z "$(docker exec vpush find / -xdev -perm /6000 -type f 2>/dev/null)"
+          grep -q "no_new_privs=True" log.txt
+          grep -q "capabilities=none" log.txt
+          grep -q "loaded 1 app(s): vcounter" log.txt
+          sudo grep -q '^\[generated\]' data/apps/vcounter.toml
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/vpush/v1/apps/vcounter/key)" = 403
+          echo "smoke test passed"
+      - if: always()
+        run: docker rm -f vpush || true
+
+  publish:
+    # Only after the tests and the image smoke test pass, and never for PRs.
+    needs: [test, smoke]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:

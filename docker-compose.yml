@@ -7,6 +7,9 @@
 #       apps/<app>.toml        your app files (+ optional <app>.py rule scripts)
 #       vpush.db               created automatically
 #
+# The container runs as UID/GID 909, so it needs to own data/ once:
+#   sudo chown -R 909:909 data
+#
 # Then: docker compose up -d     Update later with: ./update.sh
 
 services:
@@ -14,6 +17,12 @@ services:
     image: ghcr.io/1n5an1ac/vpush-server:latest
     container_name: vpush
     restart: unless-stopped
+    # user: "1001:1001"     # optional: a different UID/GID than the image's 909
+    # Runtime lockdown (Docker only takes these from here, not from the image):
+    read_only: true          # nothing outside /data is ever written
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     ports:
       # Only reachable from this machine; your reverse proxy forwards /vpush/ here.
       - "127.0.0.1:8080:8080"

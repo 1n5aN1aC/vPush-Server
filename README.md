@@ -18,7 +18,7 @@ The app only talks to the server occasionally: when enabling reminders, changing
 
 ## Deploy
 
-The image is built by GitHub Actions on every push to `main` (tests must pass first). It's published for amd64 and arm64:
+The image is built by GitHub Actions on every push to `main` (the tests and an image smoke test must pass first). It's published for amd64 and arm64:
 
 ```
 ghcr.io/1n5an1ac/vpush-server:latest      # newest main
@@ -37,9 +37,20 @@ vpush/
 ```
 
 ```bash
+sudo chown -R 909:909 data  # the container runs as UID/GID 909 and must own data/
 docker compose up -d        # first start: generates each app's keys into its .toml
 ./update.sh                 # later: pull the newest image and restart
 ```
+
+### Security
+
+The image runs as an unprivileged user, **UID/GID 909**, never as root.
+- **No setuid/setgid programs:** every one is removed from the image, so a non-root process has no ordinary way to gain privileges.
+- **Locks itself at startup:** the server sets Linux's `no_new_privs` flag on its own process and logs one line of status, e.g. `security: uid=909 gid=909 no_new_privs=True capabilities=none`. It warns if it's running as root or still holds capabilities.
+- **Runtime protections:** Docker only accepts `cap_drop`, `read_only` and `no-new-privileges` at run time, not from an image. The provided `docker-compose.yml` turns all three on, and the server never writes outside `/data`.
+- **Different UID:** add `user: "UID:GID"` in compose and `chown` `data/` to it.
+
+CI builds the real image and checks all of this (user, setuid files, `no_new_privs`, capabilities) before anything is published.
 
 Back up `data/`: `data/apps/` holds every app's keys, and `vpush.db` the subscribers. **Never change an app's VAPID keys:** every existing subscription is tied to them.
 

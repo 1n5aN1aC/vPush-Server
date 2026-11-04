@@ -14,6 +14,7 @@ import sys
 from . import __version__
 from .config import load_apps
 from .db import DB
+from .hardening import harden
 from .scheduler import Registry, Scheduler
 from .server import make_server
 from .settings import Settings
@@ -24,6 +25,7 @@ def _db(settings):
 
 
 def serve(settings):
+    harden()   # before any threads start, so they all inherit no_new_privs
     db = _db(settings)
     registry = Registry(settings)
     registry.reload_if_changed(force=True)
